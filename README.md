@@ -3,13 +3,13 @@
 The module **Comment** allows customer to add comments on different elements of the website : product, content, ...
 
 A comment is composed of a :
-  
-- title 
+
+- title
 - message
 - rating
 - is related to a customer
 
-The message can be moderated by a administrator before being displayed on the website (recommended). 
+The message can be moderated by a administrator before being displayed on the website (recommended).
 
 Only registered and logged in customer can post comment on the website. You can also only authorized customers to post
 comment on products that they have bought. Customers will receive an email after 15 days (by default) to encourage them
@@ -17,7 +17,7 @@ to post comment.
 
 If the comment has been accepted the customer can edit or delete it.
 
-This module is compatible with Thelia version 2.1 or greater. 
+This module is compatible with Thelia version 2.1 or greater.
 
 ## Installation
 
@@ -31,7 +31,7 @@ This module is compatible with Thelia version 2.1 or greater.
 Add it in your main thelia composer.json file
 
 ```
-composer require your-vendor/comment-module:~1.0
+composer require thelia/comment-module:~1.0
 ```
 
 ## Usage
@@ -92,5 +92,3 @@ Ratings are stored in the meta_data table. to retrieve the rating, you can use t
 </span>
 {/if}
 ```
-
-
