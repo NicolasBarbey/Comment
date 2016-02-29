@@ -117,7 +117,7 @@
                 {$rating={meta meta="COMMENT_RATING" key="{$definition->getRef()}" id="{$definition->getRefId()}"}}
                 {if $rating}
                 <span class="pull-right">
-                    rating: {comment_stars value=$rating}
+                    {intl d="comment.fo.default" l="rating:"} {comment_stars value=$rating}
                 </span>
                 {/if}
             {/if}

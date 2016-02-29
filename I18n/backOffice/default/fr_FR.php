@@ -39,6 +39,7 @@ return array(
     'Reference' => 'Référence',
     'Refused' => 'Refusé',
     'Save' => 'Enregistrer',
+    'Send email to customer' => 'Envoyer un email au client',
     'Sorry, comment ID=%id was not found.' => 'Désolé, le commentaire ID=%id n\'a pas été trouvé.',
     'Status' => 'Statut',
     'Status :' => 'Statut :',
