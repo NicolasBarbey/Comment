@@ -31,7 +31,7 @@ This module is compatible with Thelia version 2.1 or greater.
 Add it in your main thelia composer.json file
 
 ```
-composer require thelia/comment-module:~1.0
+composer require thelia/comment-module ~1.3.0
 ```
 
 ## Usage
