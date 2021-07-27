@@ -34,7 +34,7 @@
 
                     <div class="form-container">
                         <div class="col-md-12">
-                            {form name="admin.comment.modification.form" blo=1}
+                            {form name="admin_comment_modification_form" blo=1}
                             <form method="POST" action='{url path="/admin/module/comment/save/{$comment_id}"}' {form_enctype form=$form}>
                             <fieldset>
                                 {* Be sure to get the comment ID, even if the form could not be validated *}
@@ -67,7 +67,7 @@
                                     <label for="{$label_attr.for}">{$label}</label>
                                     <select name="{$name}" id="{$label_attr.for}" class="form-control" >
                                         {foreach $comment_status as $status}
-                                            <option value="{$status@index}" {if $status@index == $value}selected="selected"{/if}>{$status.label}</li>
+                                            <option value="{$status@index}" {if $status@index == $value}selected="selected"{/if}>{$status.label}</option>
                                         {/foreach}
                                     </select>
                                 </div>

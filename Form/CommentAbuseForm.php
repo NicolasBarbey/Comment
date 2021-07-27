@@ -13,6 +13,8 @@
 
 namespace Comment\Form;
 
+use Comment\Comment;
+use Comment\Form\Field\CommentIdType;
 use Thelia\Form\BaseForm;
 
 /**
@@ -33,7 +35,7 @@ class CommentAbuseForm extends BaseForm
             ->formBuilder
             ->add(
                 'id',
-                'comment_id'
+                CommentIdType::class
             );
     }
 
@@ -41,7 +43,7 @@ class CommentAbuseForm extends BaseForm
     /**
      * @return string the name of you form. This name must be unique
      */
-    public function getName()
+    public static function getName()
     {
         return 'comment_abuse';
     }

@@ -6,7 +6,7 @@
 
     <!-- Front -->
 
-    <route id="front.comment.get" path="/comment/get">
+    <!--<route id="front.comment.get" path="/comment/get">
         <default key="_controller">Comment\Controller\Front\CommentController::getAction</default>
     </route>
 
@@ -21,14 +21,9 @@
 
     <route id="front.comment.abuse" path="/comment/abuse" methods="post">
         <default key="_controller">Comment\Controller\Front\CommentController::abuseAction</default>
-    </route>
+    </route>-->
 
-    <!-- Admin -->
-    <route id="admin.comment.configuration" path="/admin/module/comment/configuration" methods="post">
-        <default key="_controller">Comment\Controller\Back\CommentController::saveConfiguration</default>
-    </route>
-
-    <!-- crud -->
+<!--     crud -->
 
     <route id="admin.comment.comments.default" path="/admin/module/comments">
         <default key="_controller">Comment\Controller\Back\CommentController::defaultAction</default>
@@ -52,7 +47,7 @@
         <default key="_controller">Comment\Controller\Back\CommentController::deleteAction</default>
     </route>
 
-    <route id="admin.comment.comments.status" path="/admin/module/comment/status" methods="post">
+    <!--<route id="admin.comment.comments.status" path="/admin/module/comment/status" methods="post">
         <default key="_controller">Comment\Controller\Back\CommentController::changeStatusAction</default>
     </route>
 
@@ -64,6 +59,6 @@
 
     <route id="admin.comment.comments.request-customer-comment" path="/admin/module/comment/request-customer">
         <default key="_controller">Comment\Controller\Back\CommentController::requestCustomerCommentAction</default>
-    </route>
+    </route>-->
 
 </routes>

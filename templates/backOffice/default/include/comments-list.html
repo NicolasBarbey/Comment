@@ -1,6 +1,6 @@
 {hook name="comments.top" location="comments_top" }
 
-{if $error_message}
+{if $error_message|default:null}
     <div class="row">
         <div class="col-md-12">
             <div class="alert alert-danger">
@@ -49,7 +49,7 @@
                                 <option value="">{intl d='comment.bo.default' l="All"}</option>
                                 {foreach $comment_status as $status}
                                     <option value="{$status@index}"
-                                            {if $status@index == $filter_status}selected="selected"{/if}>{$status.label}</option>
+                                            {if $status@index == $filter_status|default:null}selected="selected"{/if}>{$status.label}</option>
                                 {/foreach}
                             </select>
                         </div>
@@ -74,12 +74,12 @@
         <tbody>
         {loop type="comment"
         name="comment.list"
-        ref=$loop_ref
-        ref_id=$loop_ref_id
-        status=$loop_status
-        order=$loop_order
-        page=$loop_page
-        limit=$loop_limit
+        ref=$loop_ref|default:null
+        ref_id=$loop_ref_id|default:null
+        status=$loop_status|default:null
+        order=$loop_order|default:null
+        page=$loop_page|default:null
+        limit=$loop_limit|default:null
         load_ref="1"
         backend_context="1"}
             <tr>
@@ -254,7 +254,7 @@ dialog_message  = {intl d='comment.bo.default' l="Do you really want to delete t
 
 form_action         = {token_url path='/admin/module/comment/delete'}
 form_content        = {$smarty.capture.delete_dialog nofilter}
-form_error_message  = $error_delete_message
+form_error_message  = $error_delete_message|default:null
 }
 
 <div id="comment-update-modal"></div>
