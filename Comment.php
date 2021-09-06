@@ -90,11 +90,10 @@ class Comment extends BaseModule
         }
 
         // Schema
-        try {
-            CommentQuery::create()->findOne();
-        } catch (\Exception $ex) {
-            $database = new Database($con->getWrappedConnection());
+        if (!self::getConfigValue('is_initialized', false)) {
+            $database = new Database($con);
             $database->insertSql(null, [__DIR__ . DS . 'Config' . DS . 'thelia.sql']);
+            self::setConfigValue('is_initialized', true);
         }
 
         // Messages
