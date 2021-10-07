@@ -14,6 +14,9 @@
 namespace Comment\Form;
 
 use Comment\Comment;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Thelia\Form\BaseForm;
 
@@ -38,7 +41,7 @@ class ConfigurationForm extends BaseForm
         $form
             ->add(
                 "activated",
-                "checkbox",
+                CheckboxType::class,
                 [
                     'data' => $config['activated'],
                     'label' => $this->trans("Activated"),
@@ -52,7 +55,7 @@ class ConfigurationForm extends BaseForm
             )
             ->add(
                 "moderate",
-                "checkbox",
+                CheckboxType::class,
                 [
                     'data' => $config['moderate'],
                     'label' => $this->trans("Moderate"),
@@ -64,7 +67,7 @@ class ConfigurationForm extends BaseForm
             )
             ->add(
                 "ref_allowed",
-                "text",
+                TextType::class,
                 [
                     'constraints' => [
                         new NotBlank()
@@ -79,7 +82,7 @@ class ConfigurationForm extends BaseForm
             )
             ->add(
                 "only_customer",
-                "checkbox",
+                CheckboxType::class,
                 [
                     'data' => $config['only_customer'],
                     'label' => $this->trans("Only customer"),
@@ -91,7 +94,7 @@ class ConfigurationForm extends BaseForm
             )
             ->add(
                 "only_verified",
-                "checkbox",
+                CheckboxType::class,
                 [
                     'data' => $config['only_verified'],
                     'label' => $this->trans("Only verified"),
@@ -105,7 +108,7 @@ class ConfigurationForm extends BaseForm
             )
             ->add(
                 "request_customer_ttl",
-                "number",
+                NumberType::class,
                 [
                     'data' => $config['request_customer_ttl'],
                     'label' => $this->trans("Request customer"),
@@ -119,7 +122,7 @@ class ConfigurationForm extends BaseForm
             )
             ->add(
                 "notify_admin_new_comment",
-                "checkbox",
+                CheckboxType::class,
                 [
                     'data' => $config['notify_admin_new_comment'],
                     'label' => $this->trans("Notify store managers on new comment"),
@@ -136,7 +139,7 @@ class ConfigurationForm extends BaseForm
     /**
      * @return string the name of you form. This name must be unique
      */
-    public function getName()
+    public static function getName()
     {
         return "comment-configuration-form";
     }

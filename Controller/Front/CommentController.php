@@ -30,11 +30,20 @@ use Comment\Events\CommentDefinitionEvent;
 use Comment\Events\CommentDeleteEvent;
 use Comment\Events\CommentEvents;
 use Comment\Exception\InvalidDefinitionException;
+use Comment\Form\AddCommentForm;
+use Comment\Form\CommentAbuseForm;
 use Comment\Model\CommentQuery;
 use Exception;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Form\Extension\Core\Type\FormType;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Thelia\Controller\Front\BaseFrontController;
+use Thelia\Core\Security\SecurityContext;
+use Thelia\Core\Translation\Translator;
+use Symfony\Component\Routing\Annotation\Route;
 
 /**
+ * @Route("/comment", name="comment")
  * Class CommentController
  * @package Comment\Controller\Admin
  * @author Michaël Espeche <michael.espeche@gmail.com>
@@ -46,17 +55,23 @@ class CommentController extends BaseFrontController
 
     protected $useFallbackTemplate = true;
 
-    public function getAction()
+    /**
+     * @Route("/get", name="_get", methods="GET")
+     */
+    public function getAction(RequestStack $requestStack, SecurityContext $securityContext, EventDispatcherInterface $dispatcher)
     {
         // only ajax
         $this->checkXmlHttpRequest();
 
         $definition = null;
+        $request = $requestStack->getCurrentRequest();
 
         try {
             $definition = $this->getDefinition(
-                $this->getRequest()->get('ref', null),
-                $this->getRequest()->get('ref_id', null)
+                $request->get('ref', null),
+                $request->get('ref_id', null),
+                $securityContext,
+                $dispatcher
             );
         } catch (InvalidDefinitionException $ex) {
             if ($ex->isSilent()) {
@@ -68,20 +83,23 @@ class CommentController extends BaseFrontController
         return $this->render(
             "ajax-comments",
             [
-                'ref' => $this->getRequest()->get('ref'),
-                'ref_id' => $this->getRequest()->get('ref_id'),
-                'start' => $this->getRequest()->get('start', 0),
-                'count' => $this->getRequest()->get('count', 10),
+                'ref' => $request->get('ref'),
+                'ref_id' => $request->get('ref_id'),
+                'start' => $request->get('start', 0),
+                'count' => $request->get('count', 10),
             ]
         );
     }
 
-    public function abuseAction()
+    /**
+     * @Route("/abuse", name="_abuse", methods="POST")
+     */
+    public function abuseAction(EventDispatcherInterface $dispatcher)
     {
         // only ajax
         $this->checkXmlHttpRequest();
 
-        $abuseForm = $this->createForm('comment.abuse.form');
+        $abuseForm = $this->createForm(CommentAbuseForm::getName());
 
         $messageData = [
             "success" => false
@@ -95,17 +113,17 @@ class CommentController extends BaseFrontController
             $event = new CommentAbuseEvent();
             $event->setId($comment_id);
 
-            $this->dispatch(CommentEvents::COMMENT_ABUSE, $event);
+            $dispatcher->dispatch($event, CommentEvents::COMMENT_ABUSE);
 
             $messageData["success"] = true;
-            $messageData["message"] = $this->getTranslator()->trans(
+            $messageData["message"] = Translator::getInstance()->trans(
                 "Your request has been registered. Thank you.",
                 [],
                 Comment::MESSAGE_DOMAIN
             );
         } catch (\Exception $ex) {
             // all errors
-            $messageData["message"] = $this->getTranslator()->trans(
+            $messageData["message"] = Translator::getInstance()->trans(
                 "Your request could not be validated. Try it later",
                 [],
                 Comment::MESSAGE_DOMAIN
@@ -116,7 +134,10 @@ class CommentController extends BaseFrontController
     }
 
 
-    public function createAction()
+    /**
+     * @Route("/add", name="_add", methods="POST")
+     */
+    public function createAction(RequestStack $requestStack, EventDispatcherInterface $dispatcher, SecurityContext $securityContext)
     {
         // only ajax
         $this->checkXmlHttpRequest();
@@ -124,12 +145,14 @@ class CommentController extends BaseFrontController
         $responseData = [];
         /** @var CommentDefinitionEvent $definition */
         $definition = null;
-
+        $request = $requestStack->getCurrentRequest();
         try {
-            $params = $this->getRequest()->get('admin_add_comment');
+            $params = $request->get('admin_add_comment');
             $definition = $this->getDefinition(
                 $params['ref'],
-                $params['ref_id']
+                $params['ref_id'],
+                $securityContext,
+                $dispatcher
             );
         } catch (InvalidDefinitionException $ex) {
             if ($ex->isSilent()) {
@@ -159,8 +182,8 @@ class CommentController extends BaseFrontController
         }
 
         $commentForm = $this->createForm(
-            'comment.add.form',
-            'form',
+            AddCommentForm::getName(),
+            FormType::class,
             [],
             ['validation_groups' => $validationGroups]
         );
@@ -183,15 +206,15 @@ class CommentController extends BaseFrontController
                 $event->setStatus(\Comment\Model\Comment::PENDING);
             }
 
-            $event->setLocale($this->getRequest()->getLocale());
+            $event->setLocale($request->getLocale());
 
-            $this->dispatch(CommentEvents::COMMENT_CREATE, $event);
+            $dispatcher->dispatch($event, CommentEvents::COMMENT_CREATE);
 
             if (null !== $event->getComment()) {
                 $responseData = [
                     "success" => true,
                     "messages" => [
-                        $this->getTranslator()->trans(
+                        Translator::getInstance()->trans(
                             "Thank you for submitting your comment.",
                             [],
                             Comment::MESSAGE_DOMAIN
@@ -209,7 +232,7 @@ class CommentController extends BaseFrontController
                 $responseData = [
                     "success" => false,
                     "messages" => [
-                        $this->getTranslator()->trans(
+                        Translator::getInstance()->trans(
                             "Sorry, an unknown error occurred. Please try again.",
                             [],
                             Comment::MESSAGE_DOMAIN
@@ -227,24 +250,27 @@ class CommentController extends BaseFrontController
         return $this->jsonResponse(json_encode($responseData));
     }
 
-    protected function getDefinition($ref, $refId)
+    protected function getDefinition($ref, $refId, SecurityContext $securityContext, EventDispatcherInterface $dispatcher)
     {
         $eventDefinition = new CommentDefinitionEvent();
         $eventDefinition
             ->setRef($ref)
             ->setRefId($refId)
-            ->setCustomer($this->getSecurityContext()->getCustomerUser())
+            ->setCustomer($securityContext->getCustomerUser())
             ->setConfig(Comment::getConfig());
 
-        $this->dispatch(
-            CommentEvents::COMMENT_GET_DEFINITION,
-            $eventDefinition
+        $dispatcher->dispatch(
+            $eventDefinition,
+            CommentEvents::COMMENT_GET_DEFINITION
         );
 
         return $eventDefinition;
     }
 
-    public function deleteAction($commentId)
+    /**
+     * @Route("/delete/{commentId}", name="_delete", methods="GET")
+     */
+    public function deleteAction($commentId, SecurityContext $securityContext, EventDispatcherInterface $dispatcher)
     {
         // only ajax
         $this->checkXmlHttpRequest();
@@ -254,7 +280,7 @@ class CommentController extends BaseFrontController
         ];
 
         try {
-            $customer = $this->getSecurityContext()->getCustomerUser();
+            $customer = $securityContext->getCustomerUser();
 
             // find the comment
             $comment = CommentQuery::create()->findPk($commentId);
@@ -264,11 +290,11 @@ class CommentController extends BaseFrontController
                     $event = new CommentDeleteEvent();
                     $event->setId($commentId);
 
-                    $this->dispatch(CommentEvents::COMMENT_DELETE, $event);
+                    $dispatcher->dispatch($event, CommentEvents::COMMENT_DELETE);
 
                     if (null !== $event->getComment()) {
                         $messageData["success"] = true;
-                        $messageData["message"] = $this->getTranslator()->trans(
+                        $messageData["message"] = Translator::getInstance()->trans(
                             "Your comment has been deleted.",
                             [],
                             Comment::MESSAGE_DOMAIN

@@ -14,6 +14,7 @@
 namespace Comment\Form;
 
 use Comment\Comment;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
 /**
@@ -36,7 +37,7 @@ class CommentModificationForm extends CommentCreationForm
             ->formBuilder
             ->add(
                 'id',
-                'integer',
+                IntegerType::class,
                 [
                     'constraints' => [
                         new NotBlank()
@@ -53,7 +54,7 @@ class CommentModificationForm extends CommentCreationForm
     /**
      * @return string the name of you form. This name must be unique
      */
-    public function getName()
+    public static function getName()
     {
         return 'admin_comment_modification';
     }

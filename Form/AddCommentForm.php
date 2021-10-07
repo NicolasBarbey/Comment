@@ -23,6 +23,8 @@
 namespace Comment\Form;
 
 use Comment\Comment;
+use Symfony\Component\Form\Extension\Core\Type\EmailType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\GreaterThan;
 use Symfony\Component\Validator\Constraints\GreaterThanOrEqual;
@@ -40,7 +42,7 @@ class AddCommentForm extends BaseForm
     protected function buildForm()
     {
         $this->formBuilder
-            ->add('username', 'text', [
+            ->add('username', TextType::class, [
                 'constraints' => [
                     new NotBlank(['groups' => ['anonymous']])
                 ],
@@ -49,7 +51,7 @@ class AddCommentForm extends BaseForm
                     'for' => 'comment_username'
                 ]
             ])
-            ->add('email', 'email', [
+            ->add('email', EmailType::class, [
                 'constraints' => [
                     new NotBlank(['groups' => ['anonymous']]),
                     new Email(['groups' => ['anonymous']])
@@ -59,7 +61,7 @@ class AddCommentForm extends BaseForm
                     'for' => 'comment_mail'
                 ]
             ])
-            ->add('title', 'text', [
+            ->add('title', TextType::class, [
                 'constraints' => [
                     new NotBlank()
                 ],
@@ -68,7 +70,7 @@ class AddCommentForm extends BaseForm
                     'for' => 'title'
                 ]
             ])
-            ->add('content', 'text', [
+            ->add('content', TextType::class, [
                 'constraints' => [
                     new NotBlank()
                 ],
@@ -77,7 +79,7 @@ class AddCommentForm extends BaseForm
                     'for' => 'content'
                 ]
             ])
-            ->add('ref', 'text', [
+            ->add('ref', TextType::class, [
                 'constraints' => [
                     new NotBlank()
                 ],
@@ -86,7 +88,7 @@ class AddCommentForm extends BaseForm
                     'for' => 'ref'
                 ]
             ])
-            ->add('ref_id', 'text', [
+            ->add('ref_id', TextType::class, [
                 'constraints' => [
                     new GreaterThan(['value' => 0])
                 ],
@@ -95,7 +97,7 @@ class AddCommentForm extends BaseForm
                     'for' => 'ref_id'
                 ]
             ])
-            ->add('rating', 'text', [
+            ->add('rating', TextType::class, [
                 'constraints' => [
                     new GreaterThanOrEqual(['value' => 0, 'groups' => ['rating']]),
                     new LessThanOrEqual(['value' => 5, 'groups' => ['rating']])
@@ -112,7 +114,7 @@ class AddCommentForm extends BaseForm
         $this->form->get('success_url');
     }
 */
-    public function getName()
+    public static function getName()
     {
         return 'admin_add_comment';
     }

@@ -12,7 +12,7 @@
     <div class="col-md-12">
         <div class="form-container clearfix">
             <form method="POST" id="comment-form" action="{url path="/admin/module/comment/activation/$ref/$id"}">
-                <div class="form-group {if $error}has-error{/if}">
+                <div class="form-group {if $error|default:null}has-error{/if}">
                     <label for="comment-status" class="control-label">
                         {intl d='comment.bo.default' l="Status :"}
                     </label>

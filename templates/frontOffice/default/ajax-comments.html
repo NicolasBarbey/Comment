@@ -56,7 +56,7 @@
                 <li><a href="{url path="/comment/delete/{$ID}"}" class="delete-trigger" data-id="{$ID}" data-message="{intl d="comment.fo.default" l="Are you sure ?"}">{intl d="comment.fo.default" l="Delete"}</a></li>
                 {else}
                 <li class="comment-abuse">
-                    {form name="comment.abuse.form"}
+                    {form name="comment_abuse_form"}
                     <form id="form-add-comment-{$ID}" action="{url path="/comment/abuse"}" method="post" novalidate>
                     {form_hidden_fields form=$form}
                     {form_field form=$form field="id"}

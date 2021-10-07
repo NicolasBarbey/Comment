@@ -207,7 +207,8 @@ class CommentLoop extends BaseLoop implements PropelSearchLoopInterface
                 ->set('RATING', $comment->getRating())
                 ->set('STATUS', $comment->getStatus())
                 ->set('VERIFIED', $comment->getVerified())
-                ->set('ABUSE', $comment->getAbuse());
+                ->set('ABUSE', $comment->getAbuse())
+                ->set('CREATED', $comment->getCreatedAt()->format('d/m/Y h:m:s'));
 
             if (1 == $this->getLoadRef()) {
                 // dispatch event to get the reference element
@@ -231,7 +232,7 @@ class CommentLoop extends BaseLoop implements PropelSearchLoopInterface
      * @param string $ref
      * @param int $refId
      */
-    protected function getReference(LoopResultRow &$loopResultRow, $ref, $refId)
+    protected function getReference(LoopResultRow $loopResultRow, $ref, $refId)
     {
         $key = sprintf('%s:%s', $ref, $refId);
         $data = [
@@ -244,15 +245,15 @@ class CommentLoop extends BaseLoop implements PropelSearchLoopInterface
 
         $refLocale = $this->getRefLocale();
         if ($refLocale === null) {
-            $refLocale = $this->request->getLocale();
+            $refLocale =  $this->requestStack->getCurrentRequest()->getLocale();
         }
 
         if (!array_key_exists($key, $this->cacheRef)) {
             $event = new CommentReferenceGetterEvent($ref, $refId, $refLocale);
 
             $this->dispatcher->dispatch(
-                CommentEvents::COMMENT_REFERENCE_GETTER,
-                $event
+                $event,
+                CommentEvents::COMMENT_REFERENCE_GETTER
             );
 
             $data['REF_OBJECT'] = $event->getObject();

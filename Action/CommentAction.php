@@ -42,8 +42,9 @@ use DateInterval;
 use DateTime;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\Join;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 use Thelia\Core\Template\ParserInterface;
 use Thelia\Core\Translation\Translator;
 use Thelia\Log\Tlog;
@@ -81,11 +82,15 @@ class CommentAction implements EventSubscriberInterface
     /** @var null|MailerFactory */
     protected $mailer = null;
 
-    public function __construct(TranslatorInterface $translator, ParserInterface $parser, MailerFactory $mailer)
+    /** @var null|EventDispatcherInterface */
+    protected $dispatcher = null;
+
+    public function __construct(TranslatorInterface $translator, ParserInterface $parser, MailerFactory $mailer, EventDispatcherInterface $dispatcher)
     {
         $this->translator = $translator;
         $this->parser = $parser;
         $this->mailer = $mailer;
+        $this->dispatcher = $dispatcher;
     }
 
     public function create(CommentCreateEvent $event)
@@ -111,7 +116,6 @@ class CommentAction implements EventSubscriberInterface
 
         if (Comment::ACCEPTED === $comment->getStatus()) {
             $this->dispatchRatingCompute(
-                $event->getDispatcher(),
                 $comment->getRef(),
                 $comment->getRefId()
             );
@@ -138,7 +142,6 @@ class CommentAction implements EventSubscriberInterface
             $event->setComment($comment);
 
             $this->dispatchRatingCompute(
-                $event->getDispatcher(),
                 $comment->getRef(),
                 $comment->getRefId()
             );
@@ -154,7 +157,6 @@ class CommentAction implements EventSubscriberInterface
 
             if (Comment::ACCEPTED === $comment->getStatus()) {
                 $this->dispatchRatingCompute(
-                    $event->getDispatcher(),
                     $comment->getRef(),
                     $comment->getRefId()
                 );
@@ -184,7 +186,6 @@ class CommentAction implements EventSubscriberInterface
                 $event->setComment($comment);
 
                 $this->dispatchRatingCompute(
-                    $event->getDispatcher(),
                     $comment->getRef(),
                     $comment->getRefId()
                 );
@@ -230,7 +231,7 @@ class CommentAction implements EventSubscriberInterface
      * @param string $ref
      * @param int $refId
      */
-    protected function dispatchRatingCompute($dispatcher, $ref, $refId)
+    protected function dispatchRatingCompute($ref, $refId)
     {
         $ratingEvent = new CommentComputeRatingEvent();
 
@@ -238,9 +239,9 @@ class CommentAction implements EventSubscriberInterface
             ->setRef($ref)
             ->setRefId($refId);
 
-        $dispatcher->dispatch(
-            CommentEvents::COMMENT_RATING_COMPUTE,
-            $ratingEvent
+        $this->dispatcher->dispatch(
+            $ratingEvent,
+            CommentEvents::COMMENT_RATING_COMPUTE
         );
     }
 
@@ -292,7 +293,7 @@ class CommentAction implements EventSubscriberInterface
         }
 
         $eventName = CommentEvents::COMMENT_GET_DEFINITION . "." . $event->getRef();
-        $event->getDispatcher()->dispatch($eventName, $event);
+        $this->dispatcher->dispatch($event, $eventName);
 
         // is only customer is authorized to publish
         if ($config['only_customer'] && null === $event->getCustomer()) {
@@ -612,7 +613,7 @@ class CommentAction implements EventSubscriberInterface
             $comment->getRefId(),
             $shopLocale
         );
-        $event->getDispatcher()->dispatch(CommentEvents::COMMENT_REFERENCE_GETTER, $getCommentRefEvent);
+        $this->dispatcher->dispatch($getCommentRefEvent, CommentEvents::COMMENT_REFERENCE_GETTER);
 
         $this->mailer->sendEmailToShopManagers(
             'new_comment_notification_admin',

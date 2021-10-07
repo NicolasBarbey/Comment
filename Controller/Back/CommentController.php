@@ -33,25 +33,31 @@ use Comment\Events\CommentEvents;
 use Comment\Events\CommentUpdateEvent;
 use Comment\Form\CommentCreationForm;
 use Comment\Form\CommentModificationForm;
+use Comment\Form\ConfigurationForm;
 use Comment\Model\CommentQuery;
 use Exception;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Thelia\Controller\Admin\AbstractCrudController;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Core\Template\ParserContext;
+use Thelia\Core\Translation\Translator;
 use Thelia\Model\ConfigQuery;
 use Thelia\Model\MetaDataQuery;
 use Thelia\Tools\URL;
+use Symfony\Component\Routing\Annotation\Route;
 
 /**
+ * @Route("/admin/module/comment", name="comment_module")
  * Class CommentController
  * @package Comment\Controller\Back
  * @author Julien Chanséaume <jchanseaume@openstudio.fr>
  */
 class CommentController extends AbstractCrudController
 {
-
-    protected $currentRouter = "router.comment";
 
     public function __construct()
     {
@@ -74,7 +80,7 @@ class CommentController extends AbstractCrudController
      */
     protected function getCreationForm()
     {
-        return new CommentCreationForm($this->getRequest());
+        return $this->createForm(CommentCreationForm::getName());
     }
 
     /**
@@ -82,7 +88,7 @@ class CommentController extends AbstractCrudController
      */
     protected function getUpdateForm()
     {
-        return new CommentModificationForm($this->getRequest());
+        return $this->createForm(CommentModificationForm::getName());
     }
 
     /**
@@ -90,7 +96,7 @@ class CommentController extends AbstractCrudController
      *
      * @param \Comment\Model\Comment $object
      */
-    protected function hydrateObjectForm($object)
+    protected function hydrateObjectForm(ParserContext $parserContext,  $object)
     {
         // Prepare the data that will hydrate the form
         $data = [
@@ -109,7 +115,7 @@ class CommentController extends AbstractCrudController
         ];
 
         // Setup the object form
-        return new CommentModificationForm($this->getRequest(), "form", $data);
+        return $this->createForm(CommentModificationForm::getName(), FormType::class, $data);
     }
 
     /**
@@ -216,7 +222,7 @@ class CommentController extends AbstractCrudController
      */
     protected function getObjectLabel($object)
     {
-        $object->getTitle();
+        return $object->getTitle();
     }
 
     /**
@@ -226,7 +232,7 @@ class CommentController extends AbstractCrudController
      */
     protected function getObjectId($object)
     {
-        $object->getId();
+        return $object->getId();
     }
 
     /**
@@ -254,14 +260,13 @@ class CommentController extends AbstractCrudController
 
     /**
      * Must return a RedirectResponse instance
-     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+
      */
     protected function redirectToEditionTemplate()
     {
-        return $this->generateRedirectFromRoute(
-            "admin.comment.comments.update",
-            [],
-            ['comment_id' => $this->getRequest()->get('comment_id')]
+        $commentId = $this->getRequest()->get('comment_id');
+        return $this->generateRedirect(
+            URL::getInstance()->absoluteUrl("/admin/module/comment/update/$commentId")
         );
     }
 
@@ -275,7 +280,10 @@ class CommentController extends AbstractCrudController
     }
 
 
-    public function changeStatusAction()
+    /**
+     * @Route("/status", name="_status", methods="POST")
+     */
+    public function changeStatusAction(RequestStack $requestStack, EventDispatcherInterface $eventDispatcher)
     {
         if (null !== $response = $this->checkAuth([], ['comment'], AccessManager::UPDATE)
         ) {
@@ -286,8 +294,9 @@ class CommentController extends AbstractCrudController
             "success" => false,
         ];
 
-        $id = $this->getRequest()->request->get('id');
-        $status = $this->getRequest()->request->get('status');
+        $request = $requestStack->getCurrentRequest();
+        $id = $request->request->get('id');
+        $status = $request->request->get('status');
 
         if (null !== $id && null !== $status) {
             try {
@@ -296,9 +305,9 @@ class CommentController extends AbstractCrudController
                     ->setId($id)
                     ->setNewStatus($status);
 
-                $this->dispatch(
-                    CommentEvents::COMMENT_STATUS_UPDATE,
-                    $event
+                $eventDispatcher->dispatch(
+                    $event,
+                    CommentEvents::COMMENT_STATUS_UPDATE
                 );
 
                 $message = [
@@ -312,12 +321,15 @@ class CommentController extends AbstractCrudController
                 $message["error"] = $ex->getMessage();
             }
         } else {
-            $message["error"] = $this->getTranslator()->trans('Missing parameters', [], Comment::MESSAGE_DOMAIN);
+            $message["error"] = Translator::getInstance()->trans('Missing parameters', [], Comment::MESSAGE_DOMAIN);
         }
 
         return $this->jsonResponse(json_encode($message));
     }
 
+    /**
+     * @Route("/activation/{ref}/{refId}", name="_activation", methods="POST")
+     */
     public function activationAction($ref, $refId)
     {
         if (null !== $response = $this->checkAuth([], ['comment'], AccessManager::UPDATE)
@@ -360,7 +372,10 @@ class CommentController extends AbstractCrudController
      *
      * @return \Symfony\Component\HttpFoundation\RedirectResponse
      */
-    public function saveConfiguration()
+    /**
+     * @Route("/configuration", name="_configuration", methods="POST")
+     */
+    public function saveConfiguration(ParserContext $parserContext)
     {
 
         if (null !== $response = $this->checkAuth([AdminResources::MODULE], ['comment'], AccessManager::UPDATE)
@@ -368,7 +383,7 @@ class CommentController extends AbstractCrudController
             return $response;
         }
 
-        $form = new \Comment\Form\ConfigurationForm($this->getRequest());
+        $form = $this->createForm(ConfigurationForm::getName());
         $message = "";
 
         $response = null;
@@ -407,8 +422,8 @@ class CommentController extends AbstractCrudController
         }
         if ($message) {
             $form->setErrorMessage($message);
-            $this->getParserContext()->addForm($form);
-            $this->getParserContext()->setGeneralError($message);
+            $parserContext->addForm($form);
+            $parserContext->setGeneralError($message);
 
             return $this->render(
                 "module-configure",
@@ -421,13 +436,16 @@ class CommentController extends AbstractCrudController
         );
     }
 
-    public function requestCustomerCommentAction()
+    /**
+     * @Route("/request-customer", name="_request-customer", methods="POST")
+     */
+    public function requestCustomerCommentAction(EventDispatcherInterface $eventDispatcher)
     {
         // We do not check auth, as the related route may be invoked from a cron
         try {
-            $this->dispatch(
-                CommentEvents::COMMENT_CUSTOMER_DEMAND,
-                new CommentCheckOrderEvent()
+            $eventDispatcher->dispatch(
+                new CommentCheckOrderEvent(),
+                CommentEvents::COMMENT_CUSTOMER_DEMAND
             );
         } catch (\Exception $ex) {
             // Any error

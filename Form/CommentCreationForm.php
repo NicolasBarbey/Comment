@@ -14,6 +14,9 @@
 namespace Comment\Form;
 
 use Comment\Comment;
+use Symfony\Component\Form\Extension\Core\Type\EmailType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\GreaterThanOrEqual;
 use Symfony\Component\Validator\Constraints\Length;
@@ -40,7 +43,7 @@ class CommentCreationForm extends BaseForm
             ->formBuilder
             ->add(
                 'customer_id',
-                'integer',
+                IntegerType::class,
                 [
                     'required' => false,
                     'label' => $this->trans('Customer'),
@@ -49,7 +52,7 @@ class CommentCreationForm extends BaseForm
                     ]
                 ]
             )
-            ->add('username', 'text', [
+            ->add('username', TextType::class, [
                 'required' => false,
                 'constraints' => [
                     new Length(['min' => 2])
@@ -59,7 +62,7 @@ class CommentCreationForm extends BaseForm
                     'for' => 'comment_username'
                 ]
             ])
-            ->add('email', 'email', [
+            ->add('email', EmailType::class, [
                 'required' => false,
                 'constraints' => [
                     new Email()
@@ -71,7 +74,7 @@ class CommentCreationForm extends BaseForm
             ])
             ->add(
                 'locale',
-                'text',
+                TextType::class,
                 [
                     'label' => $this->trans('Locale'),
                     'label_attr' => [
@@ -79,7 +82,7 @@ class CommentCreationForm extends BaseForm
                     ]
                 ]
             )
-            ->add('title', 'text', [
+            ->add('title', TextType::class, [
                 'constraints' => [
                     new NotBlank()
                 ],
@@ -88,7 +91,7 @@ class CommentCreationForm extends BaseForm
                     'for' => 'title'
                 ]
             ])
-            ->add('content', 'text', [
+            ->add('content', TextType::class, [
                 'constraints' => [
                     new NotBlank()
                 ],
@@ -97,7 +100,7 @@ class CommentCreationForm extends BaseForm
                     'for' => 'content'
                 ]
             ])
-            ->add('ref', 'text', [
+            ->add('ref', TextType::class, [
                 'constraints' => [
                     new NotBlank()
                 ],
@@ -106,7 +109,7 @@ class CommentCreationForm extends BaseForm
                     'for' => 'ref'
                 ]
             ])
-            ->add('ref_id', 'integer', [
+            ->add('ref_id', IntegerType::class, [
                 'constraints' => [
                     new GreaterThanOrEqual(['value' => 0])
                 ],
@@ -115,7 +118,7 @@ class CommentCreationForm extends BaseForm
                     'for' => 'ref_id'
                 ]
             ])
-            ->add('rating', 'integer', [
+            ->add('rating', IntegerType::class, [
                 'required' => false,
                 'constraints' => [
                     new GreaterThanOrEqual(['value' => 0]),
@@ -128,7 +131,7 @@ class CommentCreationForm extends BaseForm
             ])
             ->add(
                 'status',
-                'integer',
+                IntegerType::class,
                 [
                     'label' => $this->trans('Status'),
                     'label_attr' => [
@@ -138,7 +141,7 @@ class CommentCreationForm extends BaseForm
             )
             ->add(
                 'verified',
-                'integer',
+                IntegerType::class,
                 [
                     'label' => $this->trans('Verified'),
                     'label_attr' => [
@@ -148,7 +151,7 @@ class CommentCreationForm extends BaseForm
             )
             ->add(
                 'abuse',
-                'integer',
+                IntegerType::class,
                 [
                     'label' => $this->trans('Abuse'),
                     'label_attr' => [
@@ -161,7 +164,7 @@ class CommentCreationForm extends BaseForm
     /**
      * @return string the name of you form. This name must be unique
      */
-    public function getName()
+    public static function getName()
     {
         return 'admin_comment_creation';
     }

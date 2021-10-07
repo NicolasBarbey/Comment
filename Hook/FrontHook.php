@@ -76,8 +76,8 @@ class FrontHook extends BaseHook
 
         try {
             $this->dispatcher->dispatch(
-                CommentEvents::COMMENT_GET_DEFINITION,
-                $eventDefinition
+                $eventDefinition,
+                CommentEvents::COMMENT_GET_DEFINITION
             );
             $eventDefinition->setValid(true);
         } catch (InvalidDefinitionException $ex) {
@@ -144,9 +144,9 @@ class FrontHook extends BaseHook
             $refId = $event->getArgument('ref_id');
         } else {
             if ($this->getRequest()->attributes->has('id')) {
-                $refId = intval($this->getRequest()->attributes->get('id'));
+                $refId = (int)($this->getRequest()->attributes->get('id'));
             } elseif ($this->getRequest()->query->has($ref . '_id')) {
-                $refId = intval($this->getRequest()->query->get($ref . '_id'));
+                $refId = (int)($this->getRequest()->query->get($ref . '_id'));
             }
         }
 

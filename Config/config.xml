@@ -9,10 +9,10 @@
     </loops>
 
     <forms>        
-        <form name="comment.add.form" class="Comment\Form\AddCommentForm" />
-        <form name="comment.abuse.form" class="Comment\Form\CommentAbuseForm" />
-        <form name="comment.configuration.form" class="Comment\Form\ConfigurationForm" />
-        <form name="admin.comment.modification.form" class="Comment\Form\CommentModificationForm" />
+        <form name="comment_add_form" class="Comment\Form\AddCommentForm" />
+        <form name="comment_abuse_form" class="Comment\Form\CommentAbuseForm" />
+        <form name="comment_configuration_form" class="Comment\Form\ConfigurationForm" />
+        <form name="admin_comment_modification_form" class="Comment\Form\CommentModificationForm" />
     </forms>
 
     <commands>
@@ -21,7 +21,7 @@
         -->
     </commands>
 
-    <services>
+    <!--<services>
 
         <service id="comment.action" class="Comment\Action\CommentAction" scope="request">
             <argument type="service" id="thelia.translator" />
@@ -36,7 +36,7 @@
             <tag name="thelia.form.type" />
         </service>
 
-    </services>
+    </services>-->
 
     <!--
     <exports>

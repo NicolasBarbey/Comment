@@ -22,7 +22,7 @@
         <div id="comment-top-message" class="alert hidden"></div>
 
         {if $definition->isValid()}
-        {form name="comment.add.form"}
+        {form name="comment_add_form"}
         <form id="form-add-comment" action="{url path="/comment/add"}" method="post" novalidate>
 
             {form_hidden_fields form=$form}

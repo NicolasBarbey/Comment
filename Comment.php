@@ -14,6 +14,7 @@ namespace Comment;
 
 use Comment\Model\CommentQuery;
 use Propel\Runtime\Connection\ConnectionInterface;
+use Symfony\Component\DependencyInjection\Loader\Configurator\ServicesConfigurator;
 use Thelia\Core\Translation\Translator;
 use Thelia\Install\Database;
 use Thelia\Model\ConfigQuery;
@@ -57,7 +58,7 @@ class Comment extends BaseModule
     const CONFIG_NOTIFY_ADMIN_NEW_COMMENT = true;
 
 
-    public function postActivation(ConnectionInterface $con = null)
+    public function postActivation(ConnectionInterface $con = null): void
     {
         // Config
         if (null === ConfigQuery::read('comment_activated')) {
@@ -89,11 +90,10 @@ class Comment extends BaseModule
         }
 
         // Schema
-        try {
-            CommentQuery::create()->findOne();
-        } catch (\Exception $ex) {
-            $database = new Database($con->getWrappedConnection());
+        if (!self::getConfigValue('is_initialized', false)) {
+            $database = new Database($con);
             $database->insertSql(null, [__DIR__ . DS . 'Config' . DS . 'thelia.sql']);
+            self::setConfigValue('is_initialized', true);
         }
 
         // Messages
@@ -180,30 +180,38 @@ class Comment extends BaseModule
     {
         $config = [
             'activated' => (
-                intval(ConfigQuery::read('comment_activated', self::CONFIG_ACTIVATED)) === 1
+                (int)ConfigQuery::read('comment_activated', self::CONFIG_ACTIVATED) === 1
             ),
             'moderate' => (
-                intval(ConfigQuery::read('comment_moderate', self::CONFIG_MODERATE)) === 1
+                (int)ConfigQuery::read('comment_moderate', self::CONFIG_MODERATE) === 1
             ),
             'ref_allowed' => explode(
                 ',',
                 ConfigQuery::read('comment_ref_allowed', self::CONFIG_REF_ALLOWED)
             ),
             'only_customer' => (
-                intval(ConfigQuery::read('comment_only_customer', self::CONFIG_ONLY_CUSTOMER)) === 1
+                (int)ConfigQuery::read('comment_only_customer', self::CONFIG_ONLY_CUSTOMER) === 1
             ),
             'only_verified' => (
-                intval(ConfigQuery::read('comment_only_verified', self::CONFIG_ONLY_VERIFIED)) === 1
+                (int)ConfigQuery::read('comment_only_verified', self::CONFIG_ONLY_VERIFIED) === 1
             ),
             'request_customer_ttl' => (
-                intval(ConfigQuery::read('comment_request_customer_ttl', self::CONFIG_REQUEST_CUSTOMMER_TTL))
+                (int)ConfigQuery::read('comment_request_customer_ttl', self::CONFIG_REQUEST_CUSTOMMER_TTL)
             ),
             'notify_admin_new_comment' => (
-                intval(ConfigQuery::read('comment_notify_admin_new_comment', self::CONFIG_NOTIFY_ADMIN_NEW_COMMENT))
+                (int)ConfigQuery::read('comment_notify_admin_new_comment', self::CONFIG_NOTIFY_ADMIN_NEW_COMMENT)
                     === 1
             ),
         ];
 
         return $config;
+    }
+
+    public static function configureServices(ServicesConfigurator $servicesConfigurator): void
+    {
+        $servicesConfigurator->load(self::getModuleCode().'\\', __DIR__)
+            ->exclude([THELIA_MODULE_DIR . ucfirst(self::getModuleCode()). "/I18n/*"])
+            ->autowire(true)
+            ->autoconfigure(true);
     }
 }
