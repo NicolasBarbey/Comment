@@ -31,6 +31,7 @@ use Comment\Events\CommentDeleteEvent;
 use Comment\Events\CommentEvent;
 use Comment\Events\CommentEvents;
 use Comment\Events\CommentUpdateEvent;
+use Comment\Form\AddCommentForm;
 use Comment\Form\CommentCreationForm;
 use Comment\Form\CommentModificationForm;
 use Comment\Form\ConfigurationForm;
@@ -39,10 +40,12 @@ use Exception;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Thelia\Controller\Admin\AbstractCrudController;
 use Thelia\Core\Security\AccessManager;
 use Thelia\Core\Security\Resource\AdminResources;
+use Thelia\Core\Security\SecurityContext;
 use Thelia\Core\Template\ParserContext;
 use Thelia\Core\Translation\Translator;
 use Thelia\Model\ConfigQuery;
@@ -276,7 +279,7 @@ class CommentController extends AbstractCrudController
      */
     protected function redirectToListTemplate()
     {
-        return $this->generateRedirectFromRoute('admin.comment.comments.default');
+        return $this->generateRedirect(URL::getInstance()->absoluteUrl('/admin/module/comment/request-customer'));
     }
 
 
@@ -431,15 +434,15 @@ class CommentController extends AbstractCrudController
             );
         }
 
-        return RedirectResponse::create(
+        return new RedirectResponse(
             URL::getInstance()->absoluteUrl("/admin/module/" . Comment::getModuleCode())
         );
     }
 
     /**
-     * @Route("/request-customer", name="_request-customer", methods="POST")
+     * @Route("/request-customer", name="_request-customer")
      */
-    public function requestCustomerCommentAction(EventDispatcherInterface $eventDispatcher)
+    public function requestCustomerCommentAction(EventDispatcherInterface $eventDispatcher, Request $request)
     {
         // We do not check auth, as the related route may be invoked from a cron
         try {
@@ -452,6 +455,53 @@ class CommentController extends AbstractCrudController
             return $this->errorPage($ex);
         }
 
-        return $this->redirectToListTemplate();
+        return $this->generateRedirect($request->headers->get('referer'));
+    }
+
+    /**
+     * @Route("/add-comment", name="_add-comment")
+     */
+    public function addAdminComment(
+        Request $request,
+        EventDispatcherInterface $dispatcher,
+        ParserContext $parserContext,
+    ) {
+        $commentForm = $this->createForm(AddCommentForm::getName());
+        $config = Comment::getConfig();
+
+        try {
+            $form = $this->validateForm($commentForm);
+
+            $event = new CommentCreateEvent();
+            $event->bindForm($form);
+
+            $event->setVerified(true);
+
+            $event->setStatus(\Comment\Model\Comment::PENDING);
+            if (!$config['moderate']) {
+                $event->setStatus(\Comment\Model\Comment::ACCEPTED);
+            }
+
+            $event->setLocale($request->getLocale());
+
+            $dispatcher->dispatch($event, CommentEvents::COMMENT_CREATE);
+
+            if (null !== $event->getComment()) {
+                $this->generateSuccessRedirect($commentForm);
+            } else {
+                throw new Exception(
+                    Translator::getInstance()->trans(
+                    "Sorry, an unknown error occurred. Please try again.",
+                    [],
+                    Comment::MESSAGE_DOMAIN
+                ));
+            }
+        } catch (Exception $ex) {
+            $commentForm->setErrorMessage($ex->getMessage());
+            $parserContext->addForm($commentForm);
+            $parserContext->setGeneralError($ex->getMessage());
+        }
+
+        return $this->generateErrorRedirect($commentForm);
     }
 }

@@ -38,6 +38,14 @@
                 <span class="glyphicon glyphicon-envelope"></span> {intl d='comment.bo.default' l='Send email to customer'}
             </a>
 
+            {if $ref|default:null !== null}
+            <a href="#create_comment_dialog"
+               data-toggle="modal"
+               class="btn btn-success action-btn">
+                <span class="glyphicon glyphicon-plus-sign"></span> {intl d='comment.bo.default' l='Create a comment'}
+            </a>
+            {/if}
+
             <div class="table-filters">
                 <form class="form-inline" role="form">
                     <div class="form-group">
@@ -290,6 +298,86 @@ form_error_message  = $error_delete_message|default:null
         </div>
     </div>
 </div>
+
+
+{form name="comment_add_form"}
+{capture name="create_comment_dialog"}
+    {form_hidden_fields form=$form}
+
+    {render_form_field field="success_url" value={navigate to="current"}}
+    {render_form_field field="error_url" value={navigate to="current"}}
+
+    {form_field form=$form field="ref"}
+        <input type="hidden" name="{$name}" value="{$ref|default:null}" />
+    {/form_field}
+
+    {form_field form=$form field="ref_id"}
+        <input type="hidden" name="{$name}" value="{$id|default:null}" />
+    {/form_field}
+
+    {form_field form=$form field="username"}
+        <div class="form-group">
+            <label for="{$label_attr.for}">{$label}</label>
+            <input type="text" name="{$name}" id="{$label_attr.for}" class="form-control" {if $required} required{/if}>
+        </div>
+    {/form_field}
+
+    {form_field form=$form field="email"}
+        <div class="form-group">
+            <label for="{$label_attr.for}">{$label}</label>
+            <input type="email" name="{$name}" id="{$label_attr.for}" class="form-control" {if $required} required{/if}>
+        </div>
+    {/form_field}
+
+    {form_field form=$form field="title"}
+        <div class="form-group">
+            <label for="{$label_attr.for}">{$label}</label>
+            <input type="text" name="{$name}" id="{$label_attr.for}" class="form-control" {if $required} required{/if}>
+        </div>
+    {/form_field}
+
+    {form_field form=$form field="content"}
+        <div class="form-group">
+            <label for="{$label_attr.for}">{$label}</label>
+            <textarea name="{$name}" id="{$label_attr.for}" class="form-control" {if $required} required{/if}></textarea>
+        </div>
+    {/form_field}
+
+    {if $ref|default:null === 'product'}
+
+        {form_field form=$form field="rating"}
+            <div class="form-group">
+                <div class="form-group">
+                    <label for="{$label_attr.for}">{$label}</label>
+                    <select name="{$name}" id="{$label_attr.for}" class="form-control">
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+            </div>
+        {/form_field}
+    {/if}
+{/capture}
+{/form}
+
+{include
+    file = "includes/generic-create-dialog.html"
+
+    dialog_id    = "create_comment_dialog"
+    dialog_title = {intl d='comment.bo.default' l="Create a new comment"}
+    dialog_body  = {$smarty.capture.create_comment_dialog nofilter}
+
+    form_action= {url path="/admin/module/comment/add-comment"}
+
+    dialog_ok_label     = {intl l="Save"}
+    dialog_cancel_label = {intl l="Cancel"}
+    form_enctype = null
+    form_content = null
+}
 
 <script type="text/javascript">
     var commentStatus = {$comment_status|json_encode nofilter};
