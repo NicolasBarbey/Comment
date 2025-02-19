@@ -53,28 +53,24 @@ class AddCommentForm extends BaseForm
             ])
             ->add('email', EmailType::class, [
                 'constraints' => [
-                    new NotBlank(['groups' => ['anonymous']]),
                     new Email(['groups' => ['anonymous']])
                 ],
+                'required' => false,
                 'label' => $this->trans('Email'),
                 'label_attr' => [
                     'for' => 'comment_mail'
                 ]
             ])
             ->add('title', TextType::class, [
-                'constraints' => [
-                    new NotBlank()
-                ],
+                'required' => false,
                 'label' => $this->trans('Title'),
                 'label_attr' => [
                     'for' => 'title'
                 ]
             ])
             ->add('content', TextType::class, [
-                'constraints' => [
-                    new NotBlank()
-                ],
                 'label' => $this->trans('Content'),
+                'required' => false,
                 'label_attr' => [
                     'for' => 'content'
                 ]
@@ -102,6 +98,7 @@ class AddCommentForm extends BaseForm
                     new GreaterThanOrEqual(['value' => 0, 'groups' => ['rating']]),
                     new LessThanOrEqual(['value' => 5, 'groups' => ['rating']])
                 ],
+                'required' => false,
                 'label' => $this->trans('Rating'),
                 'label_attr' => [
                     'for' => 'rating'

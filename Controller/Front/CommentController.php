@@ -34,6 +34,8 @@ use Comment\Form\AddCommentForm;
 use Comment\Form\CommentAbuseForm;
 use Comment\Model\CommentQuery;
 use Exception;
+use ReCaptcha\Event\ReCaptchaCheckEvent;
+use ReCaptcha\Event\ReCaptchaEvents;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -41,6 +43,7 @@ use Thelia\Controller\Front\BaseFrontController;
 use Thelia\Core\Security\SecurityContext;
 use Thelia\Core\Translation\Translator;
 use Symfony\Component\Routing\Annotation\Route;
+use Thelia\Model\ModuleQuery;
 
 /**
  * @Route("/comment", name="comment")
@@ -189,6 +192,14 @@ class CommentController extends BaseFrontController
         );
 
         try {
+            if (null !== ModuleQuery::create()->filterByCode("ReCaptcha")->filterByActivate(1)->findOne()) {
+                $checkCaptchaEvent = new ReCaptchaCheckEvent();
+                $dispatcher->dispatch($checkCaptchaEvent, ReCaptchaEvents::CHECK_CAPTCHA_EVENT);
+                if ($checkCaptchaEvent->isHuman() == false) {
+                    throw new \Exception('Invalid captcha');
+                }
+            }
+
             $form = $this->validateForm($commentForm);
 
             $event = new CommentCreateEvent();

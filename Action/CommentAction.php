@@ -569,14 +569,7 @@ class CommentAction implements EventSubscriberInterface
 
             $message->setLocale($locale);
 
-            $instance = \Swift_Message::newInstance()
-                ->addTo($customer->getEmail(), $customer->getFirstname() . " " . $customer->getLastname())
-                ->addFrom($contact_email, ConfigQuery::getStoreName());
-
-            // Build subject and body
-            $message->buildMessage($parser, $instance);
-
-            $this->mailer->send($instance);
+            $this->mailer->sendEmailToCustomer($message->getName(), $customer);
 
             Tlog::getInstance()->debug(
                 "Message sent to customer " . $customer->getEmail() . " to ask for comments"
